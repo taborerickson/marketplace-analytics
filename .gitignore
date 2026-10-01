@@ -12,9 +12,11 @@ __pycache__/
 .env.*
 !.env.example
 profiles.yml
+.user.yml
 *.pem
 *.p8
 *.key
+/docs/
 
 # generated dbt output 
 target/
