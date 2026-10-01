@@ -1,0 +1,15 @@
+# Copy to ~/.dbt/profiles.yml and fill in your own values.
+# Do not commit real profiles.yml
+marketplace_analytics:
+  target: dev
+  outputs:
+    dev:
+      type: snowflake
+      account: <your_account_identifier>
+      user: <your_snowflake_user>
+      password: <your_password>
+      role: SYSADMIN
+      warehouse: MARKETPLACE_WH
+      database: MARKETPLACE_ANALYTICS
+      schema: DBT_DEV
+      threads: 4

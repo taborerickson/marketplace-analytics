@@ -1,0 +1,114 @@
+models:
+  - name: stg_olist_orders
+    description: One row per source order. Timestamps cast to TIMESTAMP_NTZ
+    columns:
+      - name: order_id
+        description: Source order identifier (primary key).
+        data_tests:
+          - unique
+          - not_null
+      - name: customer_id
+        description: Order-associated customer record, not the repeat-customer identity.
+        data_tests:
+          - not_null
+          - relationships:
+              arguments:
+                to: ref('stg_olist_customers')
+                field: customer_id
+      - name: order_status
+        description: Source order status, preserved as-is.
+        data_tests:
+          - accepted_values:
+              arguments:
+                values: ['delivered', 'shipped', 'canceled', 'unavailable', 'invoiced', 'processing', 'created', 'approved']
+      - name: purchased_at
+        description: Purchase timestamp.
+        data_tests:
+          - not_null
+      - name: approved_at
+        description: Payment approval timestamp; might be null.
+      - name: delivered_to_carrier_at
+        description: Handoff to carrier timestamp; might be null.
+      - name: delivered_to_customer_at
+        description: Delivery to customer timestamp; null for undelivered orders and delivered-status exceptions.
+      - name: estimated_delivery_at
+        description: Estimated delivery date provided at purchase.
+
+  - name: stg_olist_order_items
+    description: One row per item within an order. Money cast to NUMBER(12,2).
+    columns:
+      - name: order_item_key
+        description: Surrogate key built from order_id and order_item_id.
+        data_tests:
+          - unique
+          - not_null
+      - name: order_id
+        description: Order the item belongs to.
+        data_tests:
+          - not_null
+          - relationships:
+              arguments:
+                to: ref('stg_olist_orders')
+                field: order_id
+      - name: order_item_sequence
+        description: Item sequence number within the order.
+      - name: product_id
+        description: Source product identifier.
+      - name: seller_id
+        description: Source seller identifier.
+      - name: shipping_limit_at
+        description: Seller shipping deadline.
+      - name: item_price
+        description: Item merchandise price. Not company revenue.
+      - name: freight_value
+        description: Freight charged for the item; zero is a valid source value.
+
+  - name: stg_olist_order_payments
+    description: One row per payment sequence within an order. Source anomalies are kept (zero-value payments, zero installments, not_defined type).
+    columns:
+      - name: order_payment_key
+        description: Surrogate key built from order_id and payment_sequential.
+        data_tests:
+          - unique
+          - not_null
+      - name: order_id
+        description: Order the payment belongs to.
+        data_tests:
+          - not_null
+          - relationships:
+              arguments:
+                to: ref('stg_olist_orders')
+                field: order_id
+      - name: payment_sequence
+        description: Payment sequence number within the order.
+      - name: payment_type
+        description: Source payment method.
+        data_tests:
+          - accepted_values:
+              arguments:
+                values: ['credit_card', 'boleto', 'voucher', 'debit_card', 'not_defined']
+      - name: payment_installments
+        description: Number of installments as recorded.
+      - name: payment_value
+        description: Recorded payment amount. Not company revenue.
+
+  - name: stg_olist_customers
+    description: One row per order-associated customer record. A repeat customer has multiple customer_id values under one customer_unique_id.
+    columns:
+      - name: customer_id
+        description: Order-associated customer record identifier (primary key).
+        data_tests:
+          - unique
+          - not_null
+      - name: customer_unique_id
+        description: Repeat-customer identity.
+        data_tests:
+          - not_null
+      - name: customer_zip_code_prefix
+        description: ZIP code prefix, kept as text to preserve leading zeros.
+      - name: customer_city
+        description: Customer city at the time of the order.
+      - name: customer_state
+        description: Customer state at the time of the order.
+        data_tests:
+          - not_null

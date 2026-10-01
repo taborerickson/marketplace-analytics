@@ -1,0 +1,43 @@
+sources:
+  - name: olist
+    description: Raw Olist marketplace extracts, loaded as text columns with no transformation.
+    database: MARKETPLACE_ANALYTICS
+    schema: RAW
+    tables:
+      - name: orders
+        identifier: OLIST_ORDERS
+        description: One row per order.
+        columns:
+          - name: order_id
+            description: Source order identifier.
+            data_tests:
+              - unique
+              - not_null
+
+      - name: order_items
+        identifier: OLIST_ORDER_ITEMS
+        description: One row per item within an order.
+        columns:
+          - name: order_id
+            description: Order the item belongs to.
+            data_tests:
+              - not_null
+
+      - name: order_payments
+        identifier: OLIST_ORDER_PAYMENTS
+        description: One row per payment sequence within an order.
+        columns:
+          - name: order_id
+            description: Order the payment belongs to.
+            data_tests:
+              - not_null
+
+      - name: customers
+        identifier: OLIST_CUSTOMERS
+        description: One row per order-associated customer record.
+        columns:
+          - name: customer_id
+            description: Order-associated customer record identifier.
+            data_tests:
+              - unique
+              - not_null
