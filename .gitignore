@@ -1,0 +1,29 @@
+# local python environmnet and caches 
+.venv/
+__pycache__/
+*.py[cod]
+
+# real source data 
+/data/raw/*
+!/data/raw/.gitkeep
+
+# local credentials and connection setup
+.env
+.env.*
+!.env.example
+profiles.yml
+*.pem
+*.p8
+*.key
+
+# generated dbt output 
+target/
+dbt_packages/
+logs/
+
+# local editor settings
+.vscode/
+
+# operating-system files
+.DS_Store
+Thumbs.db
