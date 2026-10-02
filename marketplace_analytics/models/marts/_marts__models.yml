@@ -104,3 +104,55 @@ models:
         description: Source exception. Status is delivered but no customer delivery date exists.
       - name: is_canceled_with_delivery_date
         description: Source exception. Status is canceled but a customer delivery date exists.
+  - name: mart_monthly_fulfillment
+    description: >
+      Monthly fulfillment metrics. Grain is one row per purchase month and
+      order-associated customer state. Only combinations with at least one
+      order have a row. Months are purchase-month cohorts, so delivery
+      outcomes describe the eventual observed outcome of orders purchased in
+      that month. Rates must be recomputed from summed numerators and
+      denominators when rolling up, never averaged across rows.
+    columns:
+      - name: month_state_key
+        description: "Surrogate grain key built from purchase month (YYYY-MM) and customer state."
+        data_tests:
+          - unique
+          - not_null
+      - name: purchase_month
+        description: "First day of the month in which the orders were purchased."
+        data_tests:
+          - not_null
+      - name: customer_state
+        description: "State recorded on the order-associated customer record, not the latest customer state."
+        data_tests:
+          - not_null
+      - name: order_count
+        description: "All orders purchased in the month for the state, across every order status."
+        data_tests:
+          - not_null
+      - name: delivered_order_count
+        description: "Orders with status delivered and a customer delivery date present."
+      - name: canceled_order_count
+        description: "Orders with status canceled."
+      - name: unavailable_order_count
+        description: "Orders with status unavailable."
+      - name: orders_with_items_count
+        description: "Orders that have at least one item record."
+      - name: orders_with_payments_count
+        description: "Orders that have at least one payment record."
+      - name: payment_exception_count
+        description: "Orders with both items and payments where the absolute difference between recorded payments and item-plus-freight total exceeds 0.01."
+      - name: recorded_merchandise_total
+        description: "Sum of item prices across all order statuses. Recorded merchandise value, not company revenue. Null when no order in the group has items."
+      - name: recorded_freight_total
+        description: "Sum of item freight values across all order statuses. Null when no order in the group has items."
+      - name: recorded_item_plus_freight_total
+        description: "Recorded merchandise plus freight across all order statuses. Null when no order in the group has items."
+      - name: recorded_payment_total
+        description: "Sum of recorded payment values across all order statuses. Not company revenue. Null when no order in the group has payments."
+      - name: on_time_eligible_order_count
+        description: "Denominator of the on-time rate. Delivered orders (status delivered with a delivery date). Equal to delivered_order_count."
+      - name: on_time_order_count
+        description: "Numerator of the on-time rate. Delivered orders whose delivery calendar date is on or before the estimated delivery calendar date."
+      - name: on_time_rate
+        description: "on_time_order_count divided by on_time_eligible_order_count, as a ratio between 0 and 1. Null when the group has no delivered orders."
