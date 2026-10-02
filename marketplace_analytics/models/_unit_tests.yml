@@ -1,0 +1,69 @@
+# Known-answer fixture (synthetic rows, not source data).
+# One order with two items (price 10 freight 2, price 20 freight 3) and two
+# payments (15 and 20). 
+# Correct answer: merchandise 30, freight 5, item-plus-freight 35, payments 35, difference 0.
+# A direct items-to-payments join would give 4 rows and 70 on both sides.
+
+unit_tests:
+
+  - name: item_totals_aggregate_to_order_grain
+    description: "Two items on one order produce one row: merchandise 30, freight 5, item-plus-freight 35."
+    model: int_order_item_totals
+    given:
+      - input: ref('stg_olist_order_items')
+        rows:
+          - {order_id: fixture_order_1, seller_id: seller_a, item_price: 10.00, freight_value: 2.00}
+          - {order_id: fixture_order_1, seller_id: seller_b, item_price: 20.00, freight_value: 3.00}
+    expect:
+      rows:
+        - {order_id: fixture_order_1, item_count: 2, seller_count: 2, merchandise_total: 30.00, freight_total: 5.00, item_plus_freight_total: 35.00}
+
+  - name: payment_totals_aggregate_to_order_grain
+    description: "Two payments on one order produce one row: payment count 2, payment total 35."
+    model: int_order_payment_totals
+    given:
+      - input: ref('stg_olist_order_payments')
+        rows:
+          - {order_id: fixture_order_1, payment_value: 15.00}
+          - {order_id: fixture_order_1, payment_value: 20.00}
+    expect:
+      rows:
+        - {order_id: fixture_order_1, payment_count: 2, payment_total: 35.00}
+
+  - name: fct_orders_keeps_35_and_flags_exceptions
+    description: >
+      The known-answer order stays one row with 35 on both sides and a
+      difference of 0. Also checks an order without payments (totals stay
+      null and it is not an exception), a difference of exactly 0.01 (not
+      an exception), and a difference of 0.02 (an exception).
+    model: fct_orders
+    given:
+      - input: ref('stg_olist_orders')
+        rows:
+          - {order_id: fixture_order_1, customer_id: fixture_customer_1}
+          - {order_id: fixture_order_2, customer_id: fixture_customer_2}
+          - {order_id: fixture_order_3, customer_id: fixture_customer_3}
+          - {order_id: fixture_order_4, customer_id: fixture_customer_4}
+      - input: ref('stg_olist_customers')
+        rows:
+          - {customer_id: fixture_customer_1}
+          - {customer_id: fixture_customer_2}
+          - {customer_id: fixture_customer_3}
+          - {customer_id: fixture_customer_4}
+      - input: ref('int_order_item_totals')
+        rows:
+          - {order_id: fixture_order_1, merchandise_total: 30.00, freight_total: 5.00, item_plus_freight_total: 35.00}
+          - {order_id: fixture_order_2, merchandise_total: 30.00, freight_total: 5.00, item_plus_freight_total: 35.00}
+          - {order_id: fixture_order_3, merchandise_total: 30.00, freight_total: 5.00, item_plus_freight_total: 35.00}
+          - {order_id: fixture_order_4, merchandise_total: 30.00, freight_total: 5.00, item_plus_freight_total: 35.00}
+      - input: ref('int_order_payment_totals')
+        rows:
+          - {order_id: fixture_order_1, payment_total: 35.00}
+          - {order_id: fixture_order_3, payment_total: 35.01}
+          - {order_id: fixture_order_4, payment_total: 35.02}
+    expect:
+      rows:
+        - {order_id: fixture_order_1, has_items: true, has_payments: true, item_plus_freight_total: 35.00, payment_total: 35.00, payment_difference: 0.00, is_payment_exception: false}
+        - {order_id: fixture_order_2, has_items: true, has_payments: false, item_plus_freight_total: 35.00, payment_total: null, payment_difference: null, is_payment_exception: false}
+        - {order_id: fixture_order_3, has_items: true, has_payments: true, item_plus_freight_total: 35.00, payment_total: 35.01, payment_difference: 0.01, is_payment_exception: false}
+        - {order_id: fixture_order_4, has_items: true, has_payments: true, item_plus_freight_total: 35.00, payment_total: 35.02, payment_difference: 0.02, is_payment_exception: true}
