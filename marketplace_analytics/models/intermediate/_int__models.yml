@@ -1,0 +1,34 @@
+version: 2
+
+models:
+  - name: int_order_item_totals
+    description: One row per order that has at least one item. Sum of merchandise and freight to the order grain before any join to payments, which prevents join fanout. Orders without items do not appear in this model.
+    columns:
+      - name: order_id
+        description: Order identifier and primary key of this model.
+        data_tests:
+          - unique
+          - not_null
+      - name: item_count
+        description: Number of item rows on the order.
+      - name: seller_count
+        description: Number of distinct sellers on the order.
+      - name: merchandise_total
+        description: Sum of item prices, excluding freight. This is merchandise value, not company revenue.
+      - name: freight_total
+        description: Sum of item freight values.
+      - name: item_plus_freight_total
+        description: Merchandise total plus freight total. Compared with recorded payments in fct_orders.
+
+  - name: int_order_payment_totals
+    description: One row per order that has at least one payment record. Sum of payments to the order grain before any join to items, which prevents join fanout. Orders without payments do not appear in this model.
+    columns:
+      - name: order_id
+        description: Order identifier and primary key of this model.
+        data_tests:
+          - unique
+          - not_null
+      - name: payment_count
+        description: Number of payment records on the order, including zero-value records.
+      - name: payment_total
+        description: Sum of recorded payment values. This is recorded payment value, not company revenue.

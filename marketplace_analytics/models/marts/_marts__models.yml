@@ -1,0 +1,106 @@
+version: 2
+
+models:
+  - name: dim_customers
+    description: One row per customer_unique_id, the identifier for a repeat customer. Descriptive attributes come from the customer's latest order by purchase timestamp, with order_id as a deterministic tie-break. Use fct_orders for the location recorded at order time.
+    columns:
+      - name: customer_unique_id
+        description: Repeat-customer identifier and primary key of this model.
+        data_tests:
+          - unique
+          - not_null
+      - name: latest_zip_code_prefix
+        description: ZIP code prefix from the latest order, stored as text to keep leading zeros.
+      - name: latest_city
+        description: City from the latest order.
+      - name: latest_state
+        description: State from the latest order.
+      - name: order_count
+        description: Number of orders placed by the customer, across all statuses.
+      - name: first_purchased_at
+        description: Purchase timestamp of the customer's first order.
+      - name: latest_purchased_at
+        description: Purchase timestamp of the customer's latest order.
+
+  - name: fct_orders
+    description: One row per source order, for all order statuses. Item and payment totals are aggregated to the order grain before joining. Missing items or payments are flagged and their totals are left null, not set to zero. Customer location is the location recorded on the order.
+    columns:
+      - name: order_id
+        description: Order identifier and primary key of this model.
+        data_tests:
+          - unique
+          - not_null
+          - relationships:
+              arguments:
+                to: ref('stg_olist_orders')
+                field: order_id
+      - name: customer_id
+        description: Order-associated customer record. Each order has its own customer_id.
+      - name: customer_unique_id
+        description: Repeat-customer identifier. Joins to dim_customers.
+        data_tests:
+          - not_null
+          - relationships:
+              arguments:
+                to: ref('dim_customers')
+                field: customer_unique_id
+      - name: customer_zip_code_prefix
+        description: ZIP code prefix recorded on the order, stored as text.
+      - name: customer_city
+        description: City recorded on the order.
+      - name: customer_state
+        description: State recorded on the order. Used for state-level reporting.
+      - name: order_status
+        description: Source order status. One of eight accepted values.
+      - name: purchased_at
+        description: Purchase timestamp. Source time zone is not stated.
+      - name: purchase_month
+        description: First day of the purchase month. Defines the reporting cohort.
+        data_tests:
+          - not_null
+      - name: approved_at
+        description: Payment approval timestamp.
+      - name: delivered_to_carrier_at
+        description: Timestamp the order was handed to the carrier.
+      - name: delivered_to_customer_at
+        description: Timestamp the order was delivered to the customer.
+      - name: estimated_delivery_at
+        description: Estimated delivery timestamp given at purchase.
+      - name: has_items
+        description: True when the order has at least one item record.
+        data_tests:
+          - not_null
+      - name: has_payments
+        description: True when the order has at least one payment record.
+        data_tests:
+          - not_null
+      - name: item_count
+        description: Number of item rows. Null when the order has no items.
+      - name: seller_count
+        description: Number of distinct sellers. Null when the order has no items.
+      - name: merchandise_total
+        description: Sum of item prices. Null when the order has no items. Not company revenue.
+      - name: freight_total
+        description: Sum of freight values. Null when the order has no items.
+      - name: item_plus_freight_total
+        description: Merchandise total plus freight total. Null when the order has no items.
+      - name: payment_count
+        description: Number of payment records. Null when the order has no payments.
+      - name: payment_total
+        description: Sum of recorded payment values. Null when the order has no payments. Not company revenue.
+      - name: payment_difference
+        description: Payment total minus item plus freight total. Null unless the order has both items and payments.
+      - name: is_payment_exception
+        description: True when the order has both items and payments and the absolute payment difference is greater than 0.01.
+        data_tests:
+          - not_null
+      - name: is_delivered
+        description: True when the status is delivered and a customer delivery date is present.
+        data_tests:
+          - not_null
+      - name: is_on_time
+        description: For delivered orders, true when the delivery calendar date is on or before the estimated calendar date. Null when the order is not delivered.
+      - name: is_delivered_missing_delivery_date
+        description: Source exception. Status is delivered but no customer delivery date exists.
+      - name: is_canceled_with_delivery_date
+        description: Source exception. Status is canceled but a customer delivery date exists.
