@@ -9,12 +9,43 @@ with orders as (
 customers as (
     select * from {{ ref('stg_olist_customers') }}
 ),
+--============================================================
+-- Deliberate defect (exercise branch only)
+-- Items are joined to payments before aggregating. 
+-- An order with 2 items and 2 payments becomes 4 rows
+-- every total is counted twice 
+item_payment_rows as (
+    select 
+        i.order_id, 
+        i.seller_id, 
+        i.item_price, 
+        i.freight_value, 
+        p.payment_value 
+    from {{ ref('stg_olist_order_items') }} as i 
+    inner join {{ ref('stg_olist_order_payments') }} as p 
+        on i.order_id = p.order_id
+),
 item_totals as (
-    select * from {{ ref('int_order_item_totals') }}
+    select 
+        order_id, 
+        count(*) as item_count, 
+        count(distinct seller_id) as seller_count,
+        sum(item_price) as merchandise_total,
+        sum(freight_value) as freight_total,
+        (sum(item_price) + sum(freight_value)) as item_plus_freight_total
+    from item_payment_rows
+    group by order_id
 ),
 payment_totals as (
-    select * from {{ ref('int_order_payment_totals') }}
+    select 
+        order_id,
+        count(*) as payment_count,
+        sum(payment_value) as payment_total
+    from item_payment_rows
+    group by order_id
 ),
+
+--============================================================
 joined as (
     select 
         o.order_id,
