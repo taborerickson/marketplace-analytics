@@ -17,7 +17,7 @@ profiles.yml
 *.p8
 *.key
 /docs/*
-!/docs/debugging_note.md
+!/docs/debugging_notes.md
 
 # generated dbt output 
 target/
