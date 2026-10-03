@@ -104,7 +104,7 @@ Expected result: `PASS=63 WARN=0 ERROR=0 SKIP=0 TOTAL=63` (9 models, 51 data tes
 
 - **Independent reconciliation.** Fact and mart totals equal the raw totals exactly. A raw-only query reproduces the 303 payment exceptions without using any dbt model.
 - **Known-answer fixture.** One order with two items and two payments must total 35 on both sides. A direct join would produce 70.
-- **Defect exercise.** A join fanout was introduced on a branch, caught by the unit test and the source reconciliation test, and reverted. See `docs/debugging_notes.md`. 
+- **Defect exercise.** A join fanout was introduced on the branch `defect-fanout-exercise` (commit `61cedd2`), caught by the unit test and the source reconciliation test, and reverted (commit `270235c`). The branch is kept unmerged as a reference. See `docs/debugging_notes.md`. 
 - **Fresh-schema rebuild.** The full project was rebuilt into an empty schema from the raw tables. Key figures matched the development schema (`sql/validation/07_fresh_schema_rebuild_checks.sql`). 
 
 ## Results
