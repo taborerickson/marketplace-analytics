@@ -1,0 +1,31 @@
+# Descriptions for the singular (custom SQL) data tests in this folder.
+# Each name must match the test file name without the .sql extension.
+
+data_tests:
+  - name: assert_fct_orders_covers_all_staged_orders
+    description: >
+      Every staged order appears exactly once in fct_orders, and fct_orders
+      contains no order that staging lacks. Checked in both directions.
+
+  - name: assert_fct_totals_reconcile_to_source
+    description: >
+      Independent reconciliation. The order count and the merchandise, freight,
+      and payment totals in fct_orders equal the same figures computed directly
+      from the raw source tables. No tolerance.
+
+  - name: assert_mart_totals_reconcile_to_fct
+    description: >
+      Counts and recorded totals summed across mart_monthly_fulfillment equal
+      the same aggregates from fct_orders. Internal consistency only. It cannot
+      detect a fact that is itself wrong.
+
+  - name: assert_mart_on_time_metric_is_consistent
+    description: >
+      For every mart row, the on-time numerator never exceeds the denominator,
+      the denominator equals the delivered order count, and the rate is null
+      exactly when the denominator is zero.
+
+  - name: assert_money_values_are_non_negative
+    description: >
+      No staged item price, freight value, or payment value is negative. Zero
+      is valid and is kept.
