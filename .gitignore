@@ -1,4 +1,4 @@
-# local python environmnet and caches 
+# local python environment and caches 
 .venv/
 __pycache__/
 *.py[cod]
@@ -16,8 +16,12 @@ profiles.yml
 *.pem
 *.p8
 *.key
+
+# docs: published docs
 /docs/*
 !/docs/debugging_notes.md
+!/docs/metric_definitions.md
+!/docs/design_decisions.md
 
 # generated dbt output 
 target/
